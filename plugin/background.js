@@ -108,7 +108,17 @@ async function checkSharedGames(sinceTimestamp = null) {
         const data = await response.json();
         console.log(data);
 
-        const newGames = data.response.apps.filter(game => game.rt_last_played > lastCheckTime);
+        // Get user's Steam ID
+        const userSteamId = data.response.owner_steamid;
+
+        // Filter games that are:
+        // 1. Played after the last check time
+        // 2. Not owned by the user (user's Steam ID is not in owner_steamids)
+        const newGames = data.response.apps.filter(game =>
+            game.rt_time_acquired > lastCheckTime &&
+            !game.owner_steamids.includes(userSteamId)
+        );
+
         console.log(newGames);
 
         if (newGames.length > 0) {
@@ -142,8 +152,8 @@ function showNotification(game) {
             title: 'New Shared Game Available',
             message: `${game.name} is now available to play!`,
             buttons: [
-                { title: 'Open in Steam' },
-                { title: 'Open Family Page' }
+                { title: 'Open/Install' },
+                { title: 'Open Shop Page' }
             ],
             requireInteraction: true
         });
@@ -155,8 +165,8 @@ function showNotification(game) {
             title: 'New Shared Game Available',
             message: `${game.name} is now available to play!`,
             buttons: [
-                { title: 'Open in Steam' },
-                { title: 'Open Family Page' }
+                { title: 'Open/Install' },
+                { title: 'Open Shop Page' }
             ],
             requireInteraction: true
         });
@@ -174,7 +184,7 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
     } else if (buttonIndex === 1) {
         // Open Steam family page using chrome.tabs.create
         chrome.tabs.create({
-            url: 'https://store.steampowered.com/account/familymanagement/?tab=library'
+            url: `steam://store/${gameId}`
         });
     }
 });
