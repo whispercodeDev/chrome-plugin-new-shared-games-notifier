@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Steam Family Share Monitor</title>
+    <style>
+      body {
+        width: 300px;
+        padding: 10px;
+        font-family: Arial, sans-serif;
+      }
+      .status {
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 4px;
+      }
+      .connected {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+      }
+      .disconnected {
+        background-color: #ffebee;
+        color: #c62828;
+      }
+      button {
+        width: 100%;
+        padding: 8px;
+        margin: 5px 0;
+        border: none;
+        border-radius: 4px;
+        background-color: #2196f3;
+        color: white;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #1976d2;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="status" class="status"></div>
+    <button id="checkNow">Check Now</button>
+    <button id="openFamily">Open Family Page</button>
+    <button id="clearHistory">Clear History</button>
+    <script src="popup.js"></script>
+  </body>
+</html>
