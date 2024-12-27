@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const testNotificationButton = document.getElementById('testNotification');
     const checkSinceDateInput = document.getElementById('checkSinceDate');
     const checkSinceButton = document.getElementById('checkSince');
+    const lastUpdatedDiv = document.getElementById('lastUpdated');
 
     // Check connection status
     const accessToken = await chrome.runtime.sendMessage({ action: 'getAccessToken' });
@@ -17,14 +18,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         statusDiv.className = 'status disconnected';
     }
 
+    // Add function to format timestamp
+    function formatLastUpdated(timestamp) {
+        if (!timestamp) return 'Never checked';
+        const date = new Date(timestamp * 1000);
+        return `Last checked: ${date.toLocaleString()}`;
+    }
+
+    // Display initial last check time
+    const { lastCheckTime } = await chrome.storage.local.get('lastCheckTime');
+    lastUpdatedDiv.textContent = formatLastUpdated(lastCheckTime);
+
     checkNowButton.addEventListener('click', () => {
-        chrome.runtime.sendMessage({ action: 'checkNow' }, (response) => {
+        chrome.runtime.sendMessage({ action: 'checkNow' }, async (response) => {
             if (response.status === 'error') {
                 statusDiv.textContent = 'Check failed: ' + response.message;
                 statusDiv.className = 'status disconnected';
             } else {
                 statusDiv.textContent = 'Check completed successfully';
                 statusDiv.className = 'status connected';
+                // Update last check time display
+                const { lastCheckTime } = await chrome.storage.local.get('lastCheckTime');
+                lastUpdatedDiv.textContent = formatLastUpdated(lastCheckTime);
             }
         });
     });
@@ -37,6 +52,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await chrome.storage.local.set({ lastCheckTime: 0 });
         statusDiv.textContent = 'History cleared. Next check will show all shared games.';
         statusDiv.className = 'status connected';
+        lastUpdatedDiv.textContent = formatLastUpdated(0);
     });
 
     testNotificationButton.addEventListener('click', () => {
