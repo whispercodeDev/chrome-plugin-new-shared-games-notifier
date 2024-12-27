@@ -3,10 +3,11 @@
   "name": "Steam Family Share Monitor",
   "version": "1.0",
   "description": "Monitors and notifies about new shared games in Steam Family Library",
-  "permissions": ["storage", "notifications", "alarms", "tabs"],
+  "permissions": ["storage", "notifications", "alarms", "tabs", "scripting"],
   "host_permissions": [
     "https://store.steampowered.com/*",
-    "https://api.steampowered.com/*"
+    "https://api.steampowered.com/*",
+    "https://steamcdn-a.akamaihd.net/*"
   ],
   "content_scripts": [
     {
