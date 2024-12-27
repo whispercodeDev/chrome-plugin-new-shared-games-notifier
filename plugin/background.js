@@ -6,6 +6,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         // Return the current access token
         sendResponse(accessToken);
         return true;
+    } else if (request.action === 'checkSince') {
+        // Trigger check since specific timestamp
+        checkSharedGames(request.timestamp)
+            .then(() => {
+                sendResponse({ status: 'success' });
+            })
+            .catch((error) => {
+                console.error('Check failed:', error);
+                sendResponse({ status: 'error', message: error.message });
+            });
+        return true;
     } else if (request.action === 'checkNow') {
         // Trigger manual check
         checkSharedGames()
@@ -80,13 +91,15 @@ async function getAccessToken() {
     }
 }
 
-async function checkSharedGames() {
+async function checkSharedGames(sinceTimestamp = null) {
     if (!accessToken) {
         accessToken = await getAccessToken();
         if (!accessToken) return;
     }
 
-    const lastCheckTime = (await chrome.storage.local.get('lastCheckTime')).lastCheckTime || 0;
+    // Use provided timestamp or get from storage
+    const lastCheckTime = sinceTimestamp ||
+        (await chrome.storage.local.get('lastCheckTime')).lastCheckTime || 0;
 
     try {
         const response = await fetch(
@@ -104,8 +117,10 @@ async function checkSharedGames() {
             }
         }
 
-        // Update last check time
-        chrome.storage.local.set({ lastCheckTime: Math.floor(Date.now() / 1000) });
+        // Only update last check time if we're not doing a historical check
+        if (!sinceTimestamp) {
+            chrome.storage.local.set({ lastCheckTime: Math.floor(Date.now() / 1000) });
+        }
     } catch (error) {
         console.error('Error checking shared games:', error);
         // If we get an authentication error, clear the token and try again

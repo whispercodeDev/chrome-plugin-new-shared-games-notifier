@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const openFamilyButton = document.getElementById('openFamily');
     const clearHistoryButton = document.getElementById('clearHistory');
     const testNotificationButton = document.getElementById('testNotification');
+    const checkSinceDateInput = document.getElementById('checkSinceDate');
+    const checkSinceButton = document.getElementById('checkSince');
 
     // Check connection status
     const accessToken = await chrome.runtime.sendMessage({ action: 'getAccessToken' });
@@ -39,5 +41,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     testNotificationButton.addEventListener('click', () => {
         chrome.runtime.sendMessage({ action: 'testNotification' });
+    });
+
+    // Set default value to current date/time
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    checkSinceDateInput.value = now.toISOString().slice(0, 16);
+
+    checkSinceButton.addEventListener('click', () => {
+        const selectedDate = new Date(checkSinceDateInput.value);
+        const timestamp = Math.floor(selectedDate.getTime() / 1000); // Convert to Unix timestamp
+
+        chrome.runtime.sendMessage({
+            action: 'checkSince',
+            timestamp: timestamp
+        }, (response) => {
+            if (response.status === 'error') {
+                statusDiv.textContent = 'Check failed: ' + response.message;
+                statusDiv.className = 'status disconnected';
+            } else {
+                statusDiv.textContent = 'Check completed successfully';
+                statusDiv.className = 'status connected';
+            }
+        });
     });
 }); 

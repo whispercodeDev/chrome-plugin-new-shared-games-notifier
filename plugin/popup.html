@@ -34,10 +34,28 @@
       button:hover {
         background-color: #1976d2;
       }
+      .check-since-container {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .check-since-container input {
+        flex: 1;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      .check-since-container button {
+        width: auto;
+      }
     </style>
   </head>
   <body>
     <div id="status" class="status"></div>
+    <div class="check-since-container">
+      <input type="datetime-local" id="checkSinceDate" />
+      <button id="checkSince">Check</button>
+    </div>
     <button id="checkNow">Check Now</button>
     <button id="openFamily">Open Family Page</button>
     <button id="clearHistory">Clear History</button>
