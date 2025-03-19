@@ -1,39 +1,40 @@
 let accessToken = null;
 
 // Add message handling
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     if (request.action === 'getAccessToken') {
         // Return the current access token
         sendResponse(accessToken);
         return true;
-    } else if (request.action === 'checkSince') {
+    } else if (request.action === 'checkSince' || request.action === 'checkNow') {
+        const timestamp = request.action === 'checkSince' ? request.timestamp : null;
         // Trigger check since specific timestamp
-        checkSharedGames(request.timestamp)
-            .then(() => {
-                sendResponse({ status: 'success' });
+        checkSharedGames(timestamp)
+            .then((response) => {
+                if (response) {
+                    sendResponse({ status: 'success' });
+                } else {
+                    sendResponse({ status: 'error', message: 'No access token. Please log in.' });
+                }
             })
             .catch((error) => {
                 console.error('Check failed:', error);
                 sendResponse({ status: 'error', message: error.message });
             });
         return true;
-    } else if (request.action === 'checkNow') {
-        // Trigger manual check
-        checkSharedGames()
-            .then(() => {
-                sendResponse({ status: 'success' });
-            })
-            .catch((error) => {
-                console.error('Check failed:', error);
-                sendResponse({ status: 'error', message: error.message });
-            });
-        return true; // Keep the message channel open for async response
     } else if (request.action === 'testNotification') {
-        showNotification({
-            appid: '10',
-            name: 'Counter-Strike',
-            img_icon_hash: '6b0312cda02f5f777efa2f3318c307ff9acafbb5'
-        });
+        try {
+            sendResponse({ status: 'success', message: 'Notification sent' });
+            await showNotification({
+                appid: '10',
+                name: 'Counter-Strike',
+                img_icon_hash: '6b0312cda02f5f777efa2f3318c307ff9acafbb5'
+            });
+
+        } catch (error) {
+            sendResponse({ status: 'error', message: error.message });
+        }
+        return true;
     }
 });
 
@@ -94,7 +95,7 @@ async function getAccessToken() {
 async function checkSharedGames(sinceTimestamp = null) {
     if (!accessToken) {
         accessToken = await getAccessToken();
-        if (!accessToken) return;
+        if (!accessToken) return false;
     }
 
     // Use provided timestamp or get from storage
@@ -112,7 +113,7 @@ async function checkSharedGames(sinceTimestamp = null) {
         const userSteamId = data.response.owner_steamid;
 
         // Filter games that are:
-        // 1. Played after the last check time
+        // 1. Addes after the last check time
         // 2. Not owned by the user (user's Steam ID is not in owner_steamids)
         const newGames = data.response.apps.filter(game =>
             game.rt_time_acquired > lastCheckTime &&
@@ -141,9 +142,9 @@ async function checkSharedGames(sinceTimestamp = null) {
     }
 }
 
-function showNotification(game) {
+async function showNotification(game) {
     // Fetch the image first with no-cors mode
-    fetch(`https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/${game.appid}/${game.img_icon_hash}.jpg`, {
+    await fetch(`https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/${game.appid}/${game.img_icon_hash}.jpg`, {
         mode: 'no-cors'
     }).then(() => {
         chrome.notifications.create(`game-${game.appid}`, {

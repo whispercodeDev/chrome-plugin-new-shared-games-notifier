@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const statusDiv = document.getElementById('status');
     const checkNowButton = document.getElementById('checkNow');
     const openFamilyButton = document.getElementById('openFamily');
-    const clearHistoryButton = document.getElementById('clearHistory');
     const testNotificationButton = document.getElementById('testNotification');
     const checkSinceDateInput = document.getElementById('checkSinceDate');
     const checkSinceButton = document.getElementById('checkSince');
@@ -12,10 +11,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const accessToken = await chrome.runtime.sendMessage({ action: 'getAccessToken' });
     if (accessToken) {
         statusDiv.textContent = 'Connected to Steam';
-        statusDiv.className = 'status connected';
+        statusDiv.className = 'status success';
     } else {
         statusDiv.textContent = 'Not connected to Steam. Please log in.';
-        statusDiv.className = 'status disconnected';
+        statusDiv.className = 'status error';
     }
 
     // Add function to format timestamp
@@ -31,12 +30,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     checkNowButton.addEventListener('click', () => {
         chrome.runtime.sendMessage({ action: 'checkNow' }, async (response) => {
-            if (response.status === 'error') {
+            if (response && response.status === 'error') {
                 statusDiv.textContent = 'Check failed: ' + response.message;
-                statusDiv.className = 'status disconnected';
+                statusDiv.className = 'status error';
             } else {
                 statusDiv.textContent = 'Check completed successfully';
-                statusDiv.className = 'status connected';
+                statusDiv.className = 'status success';
                 // Update last check time display
                 const { lastCheckTime } = await chrome.storage.local.get('lastCheckTime');
                 lastUpdatedDiv.textContent = formatLastUpdated(lastCheckTime);
@@ -46,13 +45,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     openFamilyButton.addEventListener('click', () => {
         window.open('https://store.steampowered.com/account/familymanagement/?tab=library');
-    });
-
-    clearHistoryButton.addEventListener('click', async () => {
-        await chrome.storage.local.set({ lastCheckTime: 0 });
-        statusDiv.textContent = 'History cleared. Next check will show all shared games.';
-        statusDiv.className = 'status connected';
-        lastUpdatedDiv.textContent = formatLastUpdated(0);
     });
 
     testNotificationButton.addEventListener('click', () => {
@@ -72,12 +64,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             action: 'checkSince',
             timestamp: timestamp
         }, (response) => {
-            if (response.status === 'error') {
+            if (response && response.status === 'error') {
                 statusDiv.textContent = 'Check failed: ' + response.message;
-                statusDiv.className = 'status disconnected';
+                statusDiv.className = 'status error';
             } else {
                 statusDiv.textContent = 'Check completed successfully';
-                statusDiv.className = 'status connected';
+                statusDiv.className = 'status success';
             }
         });
     });
